@@ -43,8 +43,9 @@ The app updates itself with signed, notarized [Sparkle](docs/updates.md) updates
 - **[CLIProxyAPI hubs](docs/cliproxyapi.md)**: every Claude, ChatGPT, Antigravity, Devin, and Grok login on
   a [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) server
 
-Add your accounts from the app's Accounts screen. OpenUsage never reads other tools' credentials,
-files, or logs. See [Accounts](docs/accounts.md). Coming from 0.7.x? See
+Add your accounts from the app's Accounts screen, or use the login Claude Code or Codex already has
+on this Mac, which OpenUsage reads but never changes. It reads no other tool's credentials, files, or
+logs. See [Accounts](docs/accounts.md). Coming from 0.7.x? See
 [Upgrading from 0.7.x](docs/settings.md#upgrading-from-07x).
 
 ## Features

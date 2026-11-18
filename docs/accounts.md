@@ -23,6 +23,21 @@ If a sign-in fails, click **Try Again**.
 To add the logins of a CLIProxyAPI server, click **CLIProxyAPI** at the bottom of the list. See
 [CLIProxyAPI hubs](cliproxyapi.md).
 
+### Use a login already on this Mac
+
+**Claude Code on This Mac** and **Codex on This Mac**, near the bottom of the list, add an account
+that reads the login that tool already holds, so you don't sign in again:
+
+- **Claude Code** reads the `Claude Code-credentials` Keychain item through `/usr/bin/security`, which
+  Claude Code saves it with, so macOS doesn't ask for access.
+- **Codex** asks for a Codex home folder, the folder holding `auth.json`. Leave it blank for
+  `~/.codex`, or type another, such as one you set `CODEX_HOME` to.
+
+The account reads the login again on every refresh, so it follows each renewal the tool makes.
+OpenUsage never renews, writes, or deletes that login: renewing it here would spend the tool's refresh
+token and sign the tool out. When the tool's access token expires, the account shows an error until you
+run the tool once. One login backs one account.
+
 - You can add several accounts per provider. A new account goes to the bottom of its provider's
   accounts.
 - An account takes the email or name the provider reports. API-key accounts other than Ollama
@@ -50,16 +65,19 @@ it. If the provider refuses it, the old key stays. Copilot organization accounts
 ## Remove an account
 
 **Remove Account…** at the bottom of the account's page deletes its sign-in from this Mac. For an
-account from a CLIProxyAPI hub, remove the login on the hub or remove the whole hub.
+account from a CLIProxyAPI hub, remove the login on the hub or remove the whole hub. An account that
+reads a login on this Mac stops reading it; the tool stays signed in.
 
 ## Where things are stored
 
 Account names and the dashboard layout live in the app's preferences. Tokens and keys live in the
-app's own Keychain services. OpenUsage never reads other tools' credentials, files, Keychain items,
-databases, or environment variables.
+app's own Keychain services. Apart from the Claude Code and Codex logins you choose to use above,
+OpenUsage never reads other tools' credentials, files, Keychain items, databases, or environment
+variables.
 
 ## Sign in again
 
-When a sign-in expires, click **Sign In Again…** on the account's page. The account keeps its
+When a sign-in expires, click **Sign In Again…** on the account's page. An account that reads a login
+on this Mac has no such button: run Claude Code or Codex once to renew the login. The account keeps its
 name, place, and settings. A Copilot account on GHE.com signs in again at its own domain. In Priority, **Fix** on an account under **Needs Attention** opens
 that page.

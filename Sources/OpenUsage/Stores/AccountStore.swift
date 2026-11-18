@@ -93,6 +93,20 @@ final class AccountStore {
         return account
     }
 
+    /// Adds an account that reads a login another tool on this Mac holds. Nothing goes in the Keychain,
+    /// and one login can back only one account.
+    @discardableResult
+    func add(kind: ProviderKind, label: String, localLogin: LocalLogin) throws -> Account {
+        if let existing = accounts.first(where: { $0.localLogin == localLogin }) {
+            throw ProviderError.unavailable("This login is already added as \(existing.label).")
+        }
+        let account = newAccount(kind: kind, label: label, localLogin: localLogin)
+        accounts.append(account)
+        persist()
+        didChange?()
+        return account
+    }
+
     func rename(_ id: UUID, to label: String) {
         guard let index = accounts.firstIndex(where: { $0.id == id }) else { return }
         accounts[index].label = Self.name(label, for: accounts[index].kind)
@@ -233,11 +247,13 @@ final class AccountStore {
     /// A card id keeps only the first 8 hex digits of the account's id, and two cards with one id crash
     /// the dashboard, so an id whose card id is taken is drawn again.
     private func newAccount(
-        kind: ProviderKind, label: String, organization: String? = nil, domain: String? = nil, hub: HubLink? = nil
+        kind: ProviderKind, label: String, organization: String? = nil, domain: String? = nil, hub: HubLink? = nil,
+        localLogin: LocalLogin? = nil
     ) -> Account {
         while true {
             let account = Account(
-                id: makeID(), kind: kind, label: Self.name(label, for: kind), organization: organization, domain: domain, hub: hub
+                id: makeID(), kind: kind, label: Self.name(label, for: kind), organization: organization, domain: domain, hub: hub,
+                localLogin: localLogin
             )
             if self.account(cardID: account.cardID) == nil { return account }
         }

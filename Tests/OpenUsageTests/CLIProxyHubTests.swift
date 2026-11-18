@@ -39,7 +39,7 @@ final class CLIProxyHubTests: XCTestCase {
     }
 
     func testAddAccountOffersTheHubLast() {
-        XCTAssertEqual(AddAccountChoice.all, ProviderKind.allCases.map(AddAccountChoice.provider) + [.cliproxyHub])
+        XCTAssertEqual(AddAccountChoice.all, ProviderKind.allCases.map(AddAccountChoice.provider) + [.localLogin(.claude), .localLogin(.codex), .cliproxyHub])
     }
 
     func testTheHubAddressIsCleanedFromWhatTheUserPastes() {

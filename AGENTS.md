@@ -43,7 +43,9 @@ on `gh-pages`). Cut releases with the release-swift skill.
   Keychain service.
 - Users initiate all provider sign-ins from the popover's Accounts screen. Never discover credentials
   or accounts from other tools, and never read their files, Keychain items, SQLite databases, or
-  environment variables.
+  environment variables. The one exception: a Claude Code or Codex login the user picks on that
+  screen (`LocalLogin`), read through `LocalLoginVault` on every refresh and never renewed, written,
+  or deleted.
 - Each account has one provider runtime. The runtime calls the provider API and maps its response to
   dashboard metrics. Do not add log scanning, spend estimates, or external pricing; the one exception
   is ChatGPT's credits, priced at 4¢ each in `CodexUsageMapper`.

@@ -33,6 +33,9 @@ struct AccountDetailView: View {
                     if let domain = provider.domain {
                         infoRow(icon: provider.icon, "Signed in at \(domain)")
                     }
+                    if let login = container.accounts.account(cardID: providerID)?.localLogin {
+                        infoRow(icon: provider.icon, "Reads \(login.source)")
+                    }
                     VStack(spacing: 0) {
                         if let field = container.accounts.account(cardID: providerID).flatMap(Self.replacedField) {
                             ReplaceKeyRow(field: field) { try await container.replaceKey($0, for: providerID) }
@@ -113,7 +116,7 @@ struct AccountDetailView: View {
         switch account.authMethod {
         case .apiKey: "API Key"
         case .organizationToken: "Token"
-        case .oauth: nil
+        case .oauth, .localLogin: nil
         }
     }
 
@@ -168,7 +171,9 @@ struct AccountDetailView: View {
         ) {
             Button("Remove Account", role: .destructive) { removeAccount() }
         } message: {
-            Text("Its sign-in is deleted from this Mac. You can add the account again at any time.")
+            Text(container.accounts.account(cardID: providerID)?.localLogin == nil
+                ? "Its sign-in is deleted from this Mac. You can add the account again at any time."
+                : "OpenUsage stops reading this login, which stays signed in. You can add the account again at any time.")
         }
     }
 

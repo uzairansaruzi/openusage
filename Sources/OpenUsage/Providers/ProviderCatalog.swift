@@ -4,7 +4,8 @@ import Foundation
 enum ProviderCatalog {
     /// One runtime per account, reusing each account's runtime when it still fits. An account mirrored
     /// from a hub gets a runtime whose HTTP client tunnels through that hub, rebuilt when its link changes;
-    /// while hubs are off, its client sends nothing.
+    /// while hubs are off, its client sends nothing. An account that reads a local login reads it
+    /// through its own `LocalLoginVault`.
     static func make(
         accounts: [Account],
         vault: any CredentialVault,
@@ -28,7 +29,8 @@ enum ProviderCatalog {
                     )
                 case _?: HubOff()
                 }
-                return AccountProviderRuntime(account: account, vault: vault, http: client, claudeSessions: claudeSessions)
+                let accountVault: any CredentialVault = account.localLogin.map { LocalLoginVault(login: $0) } ?? vault
+                return AccountProviderRuntime(account: account, vault: accountVault, http: client, claudeSessions: claudeSessions)
             }
             runtime.update(account)
             return runtime

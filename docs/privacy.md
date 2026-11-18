@@ -1,8 +1,10 @@
 # Privacy
 
 OpenUsage reads nothing that belongs to other tools: no other app's Keychain items, auth files, logs,
-databases, or environment variables. It holds only the credentials you add in the app, and it calls
-only the provider APIs those accounts need.
+databases, or environment variables. The one exception is a Claude Code or Codex login you choose to
+use from the Accounts screen: OpenUsage reads that login's access token on each refresh and never
+writes, renews, or logs it. It holds only the credentials you add in the app, and it calls only the
+provider APIs those accounts need.
 
 ## Credentials stored on this Mac
 

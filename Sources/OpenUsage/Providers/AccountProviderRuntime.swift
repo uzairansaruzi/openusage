@@ -135,7 +135,7 @@ final class AccountProviderRuntime: ProviderRuntime {
     }
 
     /// A refused sign-in has to be added again; a refused key or token can be replaced on the page; a
-    /// hub's login is fixed on the hub.
+    /// hub's login is fixed on the hub; a local login is renewed by the tool that holds it.
     private var refusedCredential: ProviderError {
         if let hub = account.hub {
             return HubRefusal.noToken.error(host: hub.host, upstream: nil)
@@ -144,6 +144,7 @@ final class AccountProviderRuntime: ProviderRuntime {
         case .oauth: .signInExpired(account.kind)
         case .apiKey: .keyRejected("\(account.kind.displayName) rejected the API key.")
         case .organizationToken: .keyRejected("GitHub rejected the token.")
+        case .localLogin: .unavailable(account.localLogin?.expiredMessage ?? "")
         }
     }
 

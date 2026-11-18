@@ -2,14 +2,16 @@ import AppKit
 import Foundation
 import Observation
 
-/// A row of the provider list: a provider to sign in to, or a CLIProxyAPI hub whose logins arrive as
-/// accounts of their own providers.
+/// A row of the provider list: a provider to sign in to, a login Claude Code or Codex already holds on
+/// this Mac, or a CLIProxyAPI hub whose logins arrive as accounts of their own providers.
 enum AddAccountChoice: Hashable {
     case provider(ProviderKind)
+    case localLogin(ProviderKind)
     case cliproxyHub
 
     static var all: [AddAccountChoice] {
-        ProviderKind.allCases.map(AddAccountChoice.provider) + (CLIProxyHub.isEnabled ? [.cliproxyHub] : [])
+        ProviderKind.allCases.map(AddAccountChoice.provider) + [.localLogin(.claude), .localLogin(.codex)]
+            + (CLIProxyHub.isEnabled ? [.cliproxyHub] : [])
     }
 }
 
@@ -26,6 +28,10 @@ final class AddAccountFlow {
     /// The address typed into Copilot's Domain step.
     var domain = "" {
         didSet { if isEnteringDomain, domain != oldValue { errorMessage = nil } }
+    }
+    /// The Codex home typed into the Use Codex Login step; blank means `~/.codex`.
+    var codexHome = "" {
+        didSet { if codexHome != oldValue { errorMessage = nil } }
     }
     var hubURL = "" {
         didSet { if hubURL != oldValue { errorMessage = nil } }
@@ -45,6 +51,7 @@ final class AddAccountFlow {
     private let login: (ProviderKind, ProviderAuthMethod, String, GitHubDomain) -> any ProviderLogin
     private let connectHub: @MainActor (String, String) async throws -> Void
     private let replaceCredential: @MainActor (AccountCredential, String) async throws -> Void
+    private let readLocalLogin: @Sendable (LocalLogin) throws -> Data
     private let accountSignedInAgain: Account?
     private var task: Task<Void, Never>?
     private var codeInput: AsyncStream<String>.Continuation?
@@ -57,6 +64,7 @@ final class AddAccountFlow {
         login: @escaping (ProviderKind, ProviderAuthMethod, String, GitHubDomain) -> any ProviderLogin = ProviderLoginCatalog.login(for:method:organization:domain:),
         connectHub: @escaping @MainActor (String, String) async throws -> Void = { _, _ in },
         replaceCredential: @escaping @MainActor (AccountCredential, String) async throws -> Void = { _, _ in },
+        readLocalLogin: @escaping @Sendable (LocalLogin) throws -> Data = LocalLoginVault.readSource,
         signingInAgainTo account: Account? = nil
     ) {
         self.store = store
@@ -64,6 +72,7 @@ final class AddAccountFlow {
         self.login = login
         self.connectHub = connectHub
         self.replaceCredential = replaceCredential
+        self.readLocalLogin = readLocalLogin
         accountSignedInAgain = account
         if let account {
             selection = .provider(account.kind)
@@ -110,6 +119,13 @@ final class AddAccountFlow {
     func changeDomain() {
         gitHubDomain = nil
         errorMessage = nil
+    }
+
+    /// Claude Code's or Codex's own login: the sheet asks for the Codex home, then `addLocalLogin` adds it.
+    func chooseLocalLogin(_ kind: ProviderKind) {
+        selection = .localLogin(kind)
+        provider = kind
+        method = .localLogin
     }
 
     func chooseHub() {
@@ -174,6 +190,31 @@ final class AddAccountFlow {
         run(provider, method, input: input)
     }
 
+    /// Adds an account that reads the login Claude Code or Codex already holds, once that login reads.
+    func addLocalLogin() {
+        guard let provider, method == .localLogin, !isWorking else { return }
+        let login: LocalLogin = provider == .claude ? .claudeCode : .codexHome(typed: codexHome)
+        task?.cancel()
+        errorMessage = nil
+        isWorking = true
+        task = Task { [readLocalLogin] in
+            do {
+                let label = try await loadOffMainActor {
+                    let data = try readLocalLogin(login)
+                    _ = try LocalLoginVault.tokens(from: data, for: login)
+                    return LocalLoginVault.label(from: data, for: login)
+                }
+                guard !Task.isCancelled else { return }
+                let name = accountName.trimmed
+                try store.add(kind: provider, label: name.isEmpty ? label : name, localLogin: login)
+                finish()
+            } catch {
+                guard !Task.isCancelled else { return }
+                fail(error.localizedDescription)
+            }
+        }
+    }
+
     func back() {
         cancel()
         provider = nil
@@ -188,6 +229,7 @@ final class AddAccountFlow {
         accountName = ""
         organization = ""
         domain = ""
+        codexHome = ""
         pastedCode = ""
     }
 

@@ -5,6 +5,8 @@ enum ProviderAuthMethod: Sendable, Hashable {
     case oauth
     case apiKey(keyPage: URL)
     case organizationToken
+    /// Reads a login another tool on this Mac already holds. See `LocalLogin`.
+    case localLogin
 }
 
 enum ProviderKind: String, Codable, CaseIterable, Sendable {
@@ -91,10 +93,14 @@ struct Account: Codable, Identifiable, Hashable, Sendable {
     /// An account mirrored from a CLIProxyAPI hub carries where its login lives there; every other
     /// account has none.
     var hub: HubLink?
+    /// An account that reads a login another tool on this Mac holds, instead of one in OpenUsage's
+    /// Keychain, carries where that login lives; every other account has none.
+    let localLogin: LocalLogin?
     let addedAt: Date
 
     var authMethod: ProviderAuthMethod {
-        organization != nil ? .organizationToken : kind.authMethods[0]
+        if localLogin != nil { return .localLogin }
+        return organization != nil ? .organizationToken : kind.authMethods[0]
     }
 
     var cardID: String {
@@ -103,7 +109,7 @@ struct Account: Codable, Identifiable, Hashable, Sendable {
 
     init(
         id: UUID = UUID(), kind: ProviderKind, label: String, organization: String? = nil, domain: String? = nil,
-        hub: HubLink? = nil, addedAt: Date = Date()
+        hub: HubLink? = nil, localLogin: LocalLogin? = nil, addedAt: Date = Date()
     ) {
         self.id = id
         self.kind = kind
@@ -111,6 +117,7 @@ struct Account: Codable, Identifiable, Hashable, Sendable {
         self.organization = organization
         self.domain = domain
         self.hub = hub
+        self.localLogin = localLogin
         self.addedAt = addedAt
     }
 }

@@ -20,6 +20,7 @@ struct AddAccountSheet: View {
                 case .oauth: BrowserSignInStep(flow: flow, provider: provider, cancel: { flow.isSigningInAgain ? dismiss() : flow.back() })
                 case .apiKey(let keyPage): APIKeyStep(flow: flow, provider: provider, keyPage: keyPage, cancel: { flow.back() })
                 case .organizationToken: OrganizationTokenStep(flow: flow, provider: provider, cancel: { flow.back() })
+                case .localLogin: LocalLoginStep(flow: flow, provider: provider, cancel: { flow.back() })
                 }
             } else {
                 ProviderChoiceStep(flow: flow, cancel: { dismiss() })
@@ -56,6 +57,7 @@ private struct ProviderChoiceStep: View {
             choose: { choice in
                 switch choice {
                 case .provider(let kind): flow.choose(kind)
+                case .localLogin(let kind): flow.chooseLocalLogin(kind)
                 case .cliproxyHub: flow.chooseHub()
                 }
             }
@@ -64,6 +66,9 @@ private struct ProviderChoiceStep: View {
             case .provider(let provider):
                 ProviderIcon(id: provider.rawValue, side: 20, inset: 0.06)
                 Text(provider.displayName)
+            case .localLogin(let provider):
+                ProviderIcon(id: provider.rawValue, side: 20, inset: 0.06)
+                Text("\(localTool(provider)) on This Mac")
             case .cliproxyHub:
                 ProviderIcon(id: CLIProxyHub.markID, side: 20, inset: 0.06)
                 Text("CLIProxyAPI")
@@ -89,6 +94,47 @@ private struct MethodChoiceStep: View {
             Text(method == .organizationToken ? "Organization Billing" : "Sign In with GitHub")
         }
         CancelRow(cancel: cancel)
+    }
+}
+
+/// The tool whose login a `.localLogin` account of this provider reads.
+private func localTool(_ provider: ProviderKind) -> String {
+    provider == .claude ? "Claude Code" : "Codex"
+}
+
+/// Adds an account that reads Claude Code's or a Codex home's login, which that tool keeps renewed.
+private struct LocalLoginStep: View {
+    @Bindable var flow: AddAccountFlow
+    let provider: ProviderKind
+    let cancel: () -> Void
+
+    var body: some View {
+        SheetHeader(provider: provider, title: "Use \(localTool(provider)) Login", message: message)
+        Form {
+            Section {
+                if provider == .codex {
+                    TextField("Folder", text: $flow.codexHome, prompt: Text(LocalLogin.defaultCodexHome))
+                        .onSubmit { flow.addLocalLogin() }
+                }
+                TextField("Name", text: $flow.accountName, prompt: Text("Optional"))
+                    .onSubmit { flow.addLocalLogin() }
+            } footer: {
+                if let errorMessage = flow.errorMessage {
+                    ErrorText(errorMessage)
+                }
+            }
+        }
+        .inlineGroupedForm()
+        SheetButtons(
+            secondary: SheetAction(title: "Cancel", shortcut: .cancelAction, action: cancel),
+            primary: SheetAction(title: "Add Account", isDisabled: flow.isWorking) { flow.addLocalLogin() }
+        )
+        .padding(.bottom, 20)
+    }
+
+    private var message: String {
+        let source = provider == .claude ? "from your Keychain" : "from a Codex home folder"
+        return "Reads \(localTool(provider))’s sign-in \(source) on every refresh. \(localTool(provider)) keeps it renewed; OpenUsage never changes it."
     }
 }
 
