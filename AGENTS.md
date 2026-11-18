@@ -12,6 +12,12 @@ AGENTS.md is the source of truth for agent instructions in this repository. CLAU
 point to the nearest AGENTS.md file with `@AGENTS.md`; do not add guidance, duplicate instructions, or
 project rules to CLAUDE.md.
 
+> **Fork note:** This checkout is a personal fork. `origin` is the fork, `upstream` is
+> robinebers/openusage (fetch only). The fork's own commits sit on top of upstream `main`;
+> `script/sync_upstream.sh` replays them onto the latest upstream, tests, pushes, and relaunches the
+> dev app. Keep fork changes in few files and few commits so each sync conflicts as little as
+> possible, and never open PRs against upstream from here.
+
 > **Repository note:** This is the native Swift edition of OpenUsage. Active development happens on the
 > `main` branch. (NOT the legacy Tauri version which now sits in the `tauri-legacy` branch)
 
