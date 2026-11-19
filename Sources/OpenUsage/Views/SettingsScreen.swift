@@ -153,7 +153,7 @@ struct SettingsScreen: View {
                     .font(.system(size: 9))
                     .foregroundStyle(Theme.severityColor(.warning))
             }
-            alertRow("Use It or Lose It", info: "Over 50% left a day before its reset", priority: $dataStore.showsUseItOrLoseIt, notify: $useItOrLoseIt) {
+            alertRow("Use It or Lose It", info: "Over 50% left a day before its reset", priority: nil, notify: $useItOrLoseIt) {
                 Image(systemName: "hourglass.tophalf.filled")
                     .font(.system(size: 9))
                     .foregroundStyle(Theme.severityColor(.normal))

@@ -144,7 +144,7 @@ final class MenuBarContentTests: XCTestCase {
         reset.periodDurationMs = 7 * 24 * 3600 * 1000
         let accounts = [account(personal, limit("Spent", used: 100), reset, limit("Pin B", used: 20), limit("Low", used: 95)),
                         account(chatGPT, limit("Pin A", used: 10))]
-        let board = PriorityBoard.make(accounts: accounts, pinned: ["codex@1.Pin A", "claude@1.Pin B"], useItOrLoseIt: true, now: now)
+        let board = PriorityBoard.make(accounts: accounts, pinned: ["codex@1.Pin A", "claude@1.Pin B"], now: now)
 
         let five = MenuBarContentBuilder.build(board: board, limit: .upToFive, alwaysShows: true)
         XCTAssertEqual(five.items.map(\.shortLabel), ["Pin B", "Pin A", "Low", "Reset Soon", "Spent"],

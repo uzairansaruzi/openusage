@@ -44,11 +44,11 @@ final class RefreshBackoffTests: XCTestCase {
         await store.refreshAll(force: true)
 
         clock.set(retryAt)
-        XCTAssertEqual(store.priorityBoard(in: [group], now: clock.now).summary, .unavailable)
+        XCTAssertEqual(store.priorityBoard(in: [group], now: clock.now).notices.count, 1)
         XCTAssertEqual(store.stalenessHint(for: provider.id), "Waiting to retry after a rate limit.")
 
         await store.refreshAll(force: true)
-        XCTAssertEqual(store.priorityBoard(in: [group], now: clock.now).summary, .allClear)
+        XCTAssertTrue(store.priorityBoard(in: [group], now: clock.now).notices.isEmpty)
         XCTAssertNil(store.stalenessHint(for: provider.id))
     }
 

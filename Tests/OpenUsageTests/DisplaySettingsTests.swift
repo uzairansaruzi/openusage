@@ -93,24 +93,23 @@ final class DisplaySettingsTests: QuietWindowTestCase {
         }
         func isOn(_ label: String) -> Bool? { (switches()[label]?.value(forKey: "accessibilityValue") as? NSNumber)?.boolValue }
         func saved() -> [Bool] {
-            [defaults.object(forKey: "priorityBurningFast") as? Bool ?? true, defaults.object(forKey: "priorityUseItOrLoseIt") as? Bool ?? true]
+            [defaults.object(forKey: "priorityBurningFast") as? Bool ?? true]
                 + [PaceMilestone.warning, .critical, .burningFast, .useItOrLoseIt].map { defaults.bool(forKey: $0.settingKey) }
         }
         let alerts = ["Warning", "Critical", "Burning Fast", "Use It or Lose It"]
         try await waitUntil { switches().count == 8 }
         XCTAssertEqual(alerts.map { isOn("\($0) in Priority") }, [true, true, true, true])
-        XCTAssertEqual(alerts.map { switches()["\($0) in Priority"]?.value(forKey: "accessibilityEnabled") as? Bool }, [false, false, true, true],
-                       "Warning and Critical always show in Priority")
+        XCTAssertEqual(alerts.map { switches()["\($0) in Priority"]?.value(forKey: "accessibilityEnabled") as? Bool }, [false, false, true, false],
+                       "Warning, Critical, and Use It or Lose It always show in Priority")
         XCTAssertEqual(alerts.map { isOn("Notify About \($0)") }, [false, false, false, false])
-        XCTAssertEqual(saved(), [true, true, false, false, false, false])
+        XCTAssertEqual(saved(), [true, false, false, false, false])
 
         let presses: [(String, [Bool])] = [
-            ("Burning Fast in Priority", [false, true, false, false, false, false]),
-            ("Use It or Lose It in Priority", [false, false, false, false, false, false]),
-            ("Notify About Warning", [false, false, true, false, false, false]),
-            ("Notify About Critical", [false, false, true, true, false, false]),
-            ("Notify About Burning Fast", [false, false, true, true, true, false]),
-            ("Notify About Use It or Lose It", [false, false, true, true, true, true]),
+            ("Burning Fast in Priority", [false, false, false, false, false]),
+            ("Notify About Warning", [false, true, false, false, false]),
+            ("Notify About Critical", [false, true, true, false, false]),
+            ("Notify About Burning Fast", [false, true, true, true, false]),
+            ("Notify About Use It or Lose It", [false, true, true, true, true]),
         ]
         func switchViews(in view: NSView) -> [NSSwitch] {
             [view as? NSSwitch].compactMap { $0 } + view.subviews.flatMap(switchViews)

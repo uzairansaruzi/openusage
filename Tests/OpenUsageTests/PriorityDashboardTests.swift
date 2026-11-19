@@ -102,69 +102,22 @@ final class PriorityDashboardTests: QuietWindowTestCase {
         }
     }
 
-    /// All Clear is always the small row under the Running Out header, with or without Pinned and Used Up around it.
-    func testRunningOutHasItsHeaderAboveAllClear() throws {
+    /// With nothing running out, Running Out leaves no header or row behind, and every limit waits under Up Next.
+    func testRunningOutIsHiddenWhenNothingIsRunningOut() async throws {
+        NSApplication.shared.setValue(true, forKey: "accessibilityEnhancedUserInterface")
+        defer { NSApplication.shared.setValue(false, forKey: "accessibilityEnhancedUserInterface") }
         let provider = Provider(id: "claude@1", kind: .claude, accountLabel: "Personal")
-        func line(_ title: String, used: Double) -> DashboardLine {
-            let data = WidgetData(title: title, kind: .percent, used: used, limit: 100)
-            return DashboardLine(descriptor: WidgetDescriptor(provider: provider, key: title, metricLabel: title, sample: data), data: data)
-        }
-        let session = line("Session", used: 10)
-        func render(_ board: PriorityBoard) throws -> (rep: NSBitmapImageRep, scale: CGFloat) {
-            let list = PriorityBoardList(board: board, now: Date())
-                .frame(width: PanelMetrics.width - 2 * PanelMetrics.margin)
-                .background(Color.white)
-                .environment(\.colorScheme, .light)
-            let (_, host) = show(list, in: .borderless)
-            let rep = try XCTUnwrap(host.bitmapImageRepForCachingDisplay(in: host.bounds))
-            host.cacheDisplay(in: host.bounds, to: rep)
-            return (rep, CGFloat(rep.pixelsWide) / host.bounds.width)
-        }
-        /// Whether anything is drawn in the left column, x 4 to 120 pt, between `top` and `bottom`.
-        func inked(_ shot: (rep: NSBitmapImageRep, scale: CGFloat), from top: CGFloat, to bottom: CGFloat) -> Bool {
-            stride(from: max(0, top), to: bottom, by: 1).contains { y in
-                stride(from: CGFloat(4), to: 120, by: 1).contains { x in
-                    let color = shot.rep.colorAt(x: Int(x * shot.scale), y: Int(y * shot.scale))!.usingColorSpace(.deviceRGB)!
-                    return color.brightnessComponent < 0.85
-                }
-            }
-        }
-        /// The top of All Clear's green check in the left column.
-        func checkTop(_ shot: (rep: NSBitmapImageRep, scale: CGFloat)) throws -> CGFloat {
-            let rows = 0..<shot.rep.pixelsHigh
-            let top = try XCTUnwrap(rows.first { y in
-                (Int(4 * shot.scale)..<Int(40 * shot.scale)).contains { x in
-                    let color = shot.rep.colorAt(x: x, y: y)!.usingColorSpace(.deviceRGB)!
-                    return color.greenComponent - max(color.redComponent, color.blueComponent) > 0.3
-                }
-            }, "no All Clear row")
-            return CGFloat(top) / shot.scale
-        }
+        let data = WidgetData(title: "Session", kind: .percent, used: 10, limit: 100)
+        let session = DashboardLine(descriptor: WidgetDescriptor(provider: provider, key: "Session", metricLabel: "Session", sample: data), data: data)
+        let board = PriorityBoard.make(accounts: [DashboardAccount(provider: provider, lines: [session])], now: Date())
 
-        let alone = PriorityBoard.make(accounts: [DashboardAccount(provider: provider, lines: [session])], now: Date())
-        XCTAssertEqual(alone.summary, .allClear)
-        let aloneShot = try render(alone)
-        XCTAssertTrue(inked(aloneShot, from: 0, to: 14), "no header above the lone All Clear")
-
-        let pinnedOnly = PriorityBoard.make(accounts: [DashboardAccount(provider: provider, lines: [session])],
-                                            pinned: [session.id], now: Date())
-        XCTAssertEqual(pinnedOnly.summary, .allClear)
-        for shot in [aloneShot, try render(pinnedOnly)] {
-            XCTAssertLessThan(CGFloat(shot.rep.pixelsHigh) / shot.scale - (try checkTop(shot)), 46, "the list ends with the 46 pt All Clear row, not the big All Clear")
-        }
-
-        let used = line("Weekly", used: 100)
-        let between = PriorityBoard.make(accounts: [DashboardAccount(provider: provider, lines: [session, used])],
-                                         pinned: [session.id], now: Date())
-        XCTAssertTrue(between.showsClearRow)
-        XCTAssertEqual(between.pinned.map(\.id), [session.id])
-        XCTAssertEqual(between.usedUp.map(\.id), [used.id])
-        let shot = try render(between)
-        let check = try checkTop(shot)
-        XCTAssertTrue(inked(shot, from: check - 32, to: check - 20), "no header between Pinned and All Clear")
+        let (window, host) = show(PriorityBoardList(board: board, now: Date()).frame(width: PanelMetrics.width - 2 * PanelMetrics.margin))
+        defer { window.close() }
+        try await waitUntil { !headings(in: host).isEmpty }
+        XCTAssertEqual(headings(in: host), ["Up Next"])
     }
 
-    /// Used Up is the least important section, so it comes last, after Running Out, Use It or Lose It, and Needs Attention.
+    /// Used Up is the least important section, so it comes last, after Running Out, Up Next, and Needs Attention.
     func testUsedUpIsAlwaysTheLastSection() async throws {
         NSApplication.shared.setValue(true, forKey: "accessibilityEnhancedUserInterface")
         defer { NSApplication.shared.setValue(false, forKey: "accessibilityEnhancedUserInterface") }
@@ -183,18 +136,13 @@ final class PriorityDashboardTests: QuietWindowTestCase {
                                                        line(claude, "Opus", used: 95, resetsIn: 3 * 86400)]),
             DashboardAccount(provider: chatGPT, lines: [line(chatGPT, "Weekly", used: 10, resetsIn: 6 * 3600)]),
             DashboardAccount(provider: cursor, lines: []),
-        ], useItOrLoseIt: true, now: now) { $0.provider.id == cursor.id ? .unavailable("Sign in again.") : .current }
-        XCTAssertEqual([board.attention.count, board.useItOrLoseIt.count, board.notices.count, board.usedUp.count], [1, 1, 1, 1])
+        ], now: now) { $0.provider.id == cursor.id ? .unavailable("Sign in again.") : .current }
+        XCTAssertEqual([board.attention.count, board.upNext.count, board.notices.count, board.usedUp.count], [1, 1, 1, 1])
 
         let (window, host) = show(PriorityBoardList(board: board, now: now).frame(width: PanelMetrics.width - 2 * PanelMetrics.margin))
         defer { window.close() }
-        func headings(in element: Any) -> [String] {
-            guard let node = element as? NSObject else { return [] }
-            let heading = node.value(forKey: "accessibilityRole") as? String == "AXHeading" ? node.value(forKey: "accessibilityLabel") as? String : nil
-            return [heading].compactMap { $0 } + (node.value(forKey: "accessibilityChildren") as? [Any] ?? []).flatMap(headings)
-        }
         try await waitUntil { headings(in: host).count >= 4 }
-        XCTAssertEqual(headings(in: host), ["Running Out", "Use It or Lose It", "Needs Attention", "Used Up"])
+        XCTAssertEqual(headings(in: host), ["Running Out", "Up Next", "Needs Attention", "Used Up"])
     }
 
     /// A skeleton takes the space of the rows that replace it, so nothing around it moves when a reading lands.
@@ -227,5 +175,12 @@ final class PriorityDashboardTests: QuietWindowTestCase {
             if let button = firstButton(in: child) { return button }
         }
         return nil
+    }
+
+    /// The accessibility labels of every heading under `element`, top to bottom.
+    private func headings(in element: Any) -> [String] {
+        guard let node = element as? NSObject else { return [] }
+        let heading = node.value(forKey: "accessibilityRole") as? String == "AXHeading" ? node.value(forKey: "accessibilityLabel") as? String : nil
+        return [heading].compactMap { $0 } + (node.value(forKey: "accessibilityChildren") as? [Any] ?? []).flatMap(headings)
     }
 }

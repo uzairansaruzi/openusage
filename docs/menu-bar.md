@@ -7,9 +7,9 @@ Priority lists.
   **Quit OpenUsage**.
 - The strip shows the limits [running out](dashboard.md#priority), most urgent first, pinned or not,
   up to **Settings → Display → Menu Bar Icons → Max Items In Menu Bar** (3 by default).
-- With **Always Show In Menu Bar** on (off by default), it lists everything Priority does, in its
-  order: Pinned, Running Out, Use It or Lose It, then Used Up. A pinned limit shows once, where
-  Priority lists it.
+- With **Always Show In Menu Bar** on (off by default), it lists in Priority's order: Pinned,
+  Running Out, the Up Next limits about to reset unused (the Use It or Lose It rule), then Used Up. A
+  pinned limit shows once, where Priority lists it.
 - Each limit shows the provider's mark, a short name, and its value. An account can appear more than once.
 - Limits past that number show as a count, like `+7`. Used Up limits never count. With Always Show
   In Menu Bar off, only limits running out show or count.

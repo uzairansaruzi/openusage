@@ -9,24 +9,22 @@ The panel that opens from the menu bar icon. It has two tabs, Priority and All U
 
 ## Priority
 
-Priority shows only what needs you, most urgent first.
+Priority shows what needs you, most urgent first, then every other limit by when it resets.
 
 - **Pinned** comes first, with every pinned metric that has data. A pinned limit that's running
   out, burning fast, or about to reset unused stays here, with the color and note it would have in
-  that section, and isn't listed again below. Only a pinned limit that's used up moves, to Used Up,
+  that section, and isn't listed again below. Any other pinned limit shows its plain reset. Only a pinned limit that's used up moves, to Used Up,
   until it resets.
-- **Running Out** lists every unpinned limit at or under its Warning level (30% left by default, set in
+- **Running Out** shows only when something is running out. It lists every unpinned limit at or under its Warning level (30% left by default, set in
   [Settings → Alerts → Thresholds](settings.md#thresholds)). With **Burning Fast** on, it also lists a
   limit that would run out before it resets at your current pace, however much it has left, with the
   time it would run out, like `Out in 1h 8m`, in place of its reset. It stays listed until its pace eases to
   90% of the limit. What would run out soonest at your current pace comes first, then limits with no
   pace, least left first.
-- **Use It or Lose It** lists, with the setting of that name on, an unpinned limit that resets within 24 hours
-  with over 50% left, the same rule as the alert. Only windows longer than a day count, never the
-  5-hour session or a dollar spending cap. Each shows when it resets, like `Resets in 18h`, soonest
-  first. These show in the menu bar only with Always Show In Menu Bar on.
-- **All Clear** shows under Running Out when every account has a current reading and nothing,
-  pinned or not, is running low. It waits for accounts that haven't reported yet.
+- **Up Next** lists every other unpinned limit, soonest reset first, each with when it resets, like
+  `Resets in 18h`. A limit with no reset comes last. Of these, only a limit about to reset unused (the
+  Use It or Lose It rule: resets within 24 hours with over 50% left, for windows longer than a day and
+  never a dollar spending cap) shows in the menu bar, and only with Always Show In Menu Bar on.
 - **Needs Attention** names an account whose refresh failed or whose provider sent a notice.
   **Fix** opens the account's page with the reason and how to fix it.
 - **Used Up** always comes last. It lists what has run out, soonest reset first. A balance with no

@@ -98,7 +98,6 @@ final class UnifiedAccountsTests: QuietWindowTestCase {
     func testAUnifiedLimitIsUsedUpOnlyWhenEveryAccountIs() {
         let board = PriorityBoard.make(accounts: robins.accounts, now: now)
         XCTAssertEqual(board.usedUp.map(\.id), [], "AM1 and AM2 are used up, the others aren't")
-        XCTAssertTrue(board.showsClearRow)
 
         let spent = family([("AM1", [("weekly", limit("Weekly", left: 0, resetsIn: day))]),
                             ("AM2", [("weekly", limit("Weekly", left: 0, resetsIn: 2 * day))])])

@@ -51,7 +51,7 @@ logs. See [Accounts](docs/accounts.md). Coming from 0.7.x? See
 ## Features
 
 - **Menu bar.** The limits closest to running out, at a glance.
-- **Priority.** What's running low, what's used up, and which accounts need you.
+- **Priority.** What's running low, what's used up, which accounts need you, and every other limit by when it resets.
 - **All Usage.** Every account and limit in one place, with resets, your pace, and an optional mark
   where an even pace would be.
 - **Your layout.** Pin the metrics you care about, hide the rest with a right-click, and drag

@@ -62,7 +62,6 @@ final class BurningFastTests: XCTestCase {
         XCTAssertTrue(board.attention.isEmpty)
         XCTAssertEqual(ids(board.runningOut), ["claude@1.Weekly"])
         XCTAssertTrue(board.requiresRankingClock(at: now))
-        XCTAssertFalse(board.showsClearRow)
     }
 
     func testABurningLimitStaysListedUntilItsPaceEasesToNinetyPercent() {

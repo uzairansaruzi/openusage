@@ -18,8 +18,8 @@ Alerts, and Advanced. Changes apply at once. Hover the ⓘ beside a setting to s
 
 - **Max Items In Menu Bar.** App Icon Only, or Up to 1 through Up to 5 limits, closest to running out
   first. Others show as a count, like `+7`. The default is Up to 3. See [Menu bar](menu-bar.md).
-- **Always Show In Menu Bar.** The menu bar lists everything Priority does, in its order: Pinned,
-  Running Out, Use It or Lose It, then Used Up. Off by default, showing only what's running out.
+- **Always Show In Menu Bar.** The menu bar lists, in Priority's order: Pinned, Running Out, the Up
+  Next limits about to reset unused, then Used Up. Off by default, showing only what's running out.
 
 ## Usage display
 
@@ -52,16 +52,16 @@ Each alert has two separate switches. **Priority** lists the limit in Priority.
 **Notify** sends a notification, even with its Priority switch off.
 
 - **Warning** and **Critical.** A limit drops to its threshold or less left. Priority always lists
-  it, so that switch stays on.
+  it, so that switch stays on. The same goes for Use It or Lose It.
 - **Burning Fast.** A limit would run out before it resets at your current pace, however much it
   has left. Priority lists it under Running Out, or under Pinned if you pinned it. After it notifies
   you, it waits until the limit's pace eases to 90% of the limit before it can notify again.
 - **Use It or Lose It.** A limit resets within 24 hours with over 50% left. Only for windows longer
   than a day, such as weekly and monthly limits, never the 5-hour session or a dollar spending cap.
-  Priority lists it in its own section, or under Pinned if you pinned it, and in the menu bar only
-  with Always Show In Menu Bar on.
+  Priority lists it under Up Next, or under Pinned if you pinned it, and in the menu bar only with
+  Always Show In Menu Bar on.
 
-Priority is on by default for all four, and Notify is off. Turning the first Notify on asks macOS
+Priority is on for all four, and only Burning Fast's can be turned off. Notify is off by default. Turning the first Notify on asks macOS
 for permission. If notifications are off for OpenUsage, click **System Settings** in the notice to
 open **Notifications → OpenUsage** and allow them. An alert notifies once per reset window. All but
 Use It or Lose It notify again once the limit recovers. Click a notification to open All Usage.

@@ -71,7 +71,6 @@ final class MetricPinTests: QuietWindowTestCase {
                        "a pinned limit that is running out stays under Pinned")
         XCTAssertTrue(allPinned.attention.isEmpty, "and only there")
         XCTAssertEqual(allPinned.usedUp.map(\.id), ["codex.session"])
-        XCTAssertFalse(allPinned.showsClearRow)
     }
 
     func testRemovingAnAccountRemovesItsPins() async throws {

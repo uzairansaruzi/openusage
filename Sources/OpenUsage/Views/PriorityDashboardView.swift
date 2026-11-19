@@ -36,7 +36,6 @@ struct PriorityBoardList: View {
     var onFixAccount: ((String) -> Void)?
     var onMetricCommand: ((DashboardCommand) -> Void)?
 
-    private static let green = Color(nsColor: .systemGreen)
     private static let gaugeSide: CGFloat = 32
 
     var body: some View {
@@ -62,10 +61,10 @@ struct PriorityBoardList: View {
             .frame(maxWidth: .infinity, minHeight: 46)
         case .unavailable:
             accountNotices
-        case .allClear, .listed:
+        case .listed:
             VStack(alignment: .leading, spacing: PanelMetrics.margin) {
-                if !board.attention.isEmpty || board.showsClearRow { attentionSection }
-                if !board.useItOrLoseIt.isEmpty { useItOrLoseItSection }
+                if !board.attention.isEmpty { attentionSection }
+                if !board.upNext.isEmpty { upNextSection }
                 if !board.notices.isEmpty { accountNotices }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -140,7 +139,6 @@ struct PriorityBoardList: View {
     private var attentionSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             sectionLabel("Running Out")
-            if board.attention.isEmpty { clearRow }
             ForEach(board.attention) { item in
                 limitRow(item.provider, item.data, severity: item.reason.severity, callout: callout(item))
                     .padding(.horizontal, 4)
@@ -163,10 +161,10 @@ struct PriorityBoardList: View {
         .opacity(0.5)
     }
 
-    private var useItOrLoseItSection: some View {
+    private var upNextSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionLabel("Use It or Lose It")
-            ForEach(board.useItOrLoseIt) { item in
+            sectionLabel("Up Next")
+            ForEach(board.upNext) { item in
                 limitRow(item.provider, item.data, severity: item.reason.severity, callout: callout(item))
                     .padding(.horizontal, 4)
                     .contentShape(Rectangle())
@@ -207,8 +205,8 @@ struct PriorityBoardList: View {
         return item.resetsInText(now: now).map { ($0, Theme.severityTextColor(.normal)) }
     }
 
-    /// `callout` takes the reset's place: when a limit listed only for burning fast runs out, or when one listed to
-    /// use it or lose it resets.
+    /// `callout` takes the reset's place: when a limit listed only for burning fast runs out, or when one listed
+    /// under Up Next resets.
     private func limitRow(
         _ provider: Provider, _ data: WidgetData, severity: WidgetData.MeterSeverity, callout: (text: String, color: Color)? = nil
     ) -> some View {
@@ -279,27 +277,6 @@ struct PriorityBoardList: View {
             }
         }
         .frame(height: 28)
-    }
-
-    private var clearRow: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "checkmark")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Self.green)
-                .frame(width: Self.gaugeSide, height: Self.gaugeSide)
-                .background(Self.green.opacity(0.16), in: Circle())
-            VStack(alignment: .leading, spacing: 1) {
-                Text("All Clear")
-                    .font(.system(size: 13, weight: .medium))
-                Text("Nothing is running out.")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-            }
-            Spacer(minLength: 0)
-        }
-        .frame(height: 46)
-        .padding(.horizontal, 4)
-        .accessibilityElement(children: .combine)
     }
 
     /// One row per account still waiting, shaped like the rows that replace it. The gauge is a plain disc,

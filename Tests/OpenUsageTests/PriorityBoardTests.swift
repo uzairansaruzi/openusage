@@ -115,7 +115,7 @@ final class PriorityBoardTests: XCTestCase {
         XCTAssertEqual(result.usedUp[1].reason, .usedUp(resetsAt: now.addingTimeInterval(2 * day)))
     }
 
-    func testHealthyQuietUnreportedAndUnboundedLinesAreNotListed() {
+    func testOnlyHealthyAndQuietLimitsWaitUpNextAndUnreportedOrUnboundedLinesAreNotListed() {
         var unreported = paced("Unreported", used: 60, left: 3.5 * day)
         unreported.hasData = false
         var balance = WidgetData(title: "Balance", kind: .dollars, used: 0, limit: nil)
@@ -125,6 +125,7 @@ final class PriorityBoardTests: XCTestCase {
 
         XCTAssertTrue(result.attention.isEmpty)
         XCTAssertTrue(result.usedUp.isEmpty)
+        XCTAssertEqual(ids(result.upNext), ["claude@1.Healthy", "claude@1.Quiet"])
     }
 
     private func realLine(_ kind: ProviderKind, _ key: String, values: [MetricValue], expiries: [Date] = []) throws -> DashboardLine {
@@ -194,12 +195,11 @@ final class PriorityBoardTests: XCTestCase {
         XCTAssertEqual(ids(result.usedUp), [balance.id])
         XCTAssertEqual(result.usedUp.map(\.isPinned), [true], "its menu offers Unpin")
         XCTAssertEqual(result.summary, .listed)
-        XCTAssertTrue(result.showsClearRow)
 
         let onlyHealthy = PriorityBoard.make(accounts: [account(work, healthy)], pinned: ["claude@2.Weekly"], now: now)
-        XCTAssertEqual(onlyHealthy.summary, .allClear)
+        XCTAssertEqual(onlyHealthy.summary, .listed)
         XCTAssertTrue(onlyHealthy.hasRows, "a healthy pin alone can still be copied as a picture")
-        XCTAssertFalse(PriorityBoard.make(accounts: [account(work, healthy)], now: now).hasRows)
+        XCTAssertTrue(PriorityBoard.make(accounts: [account(work, healthy)], now: now).hasRows, "an unpinned healthy limit waits under Up Next")
     }
 
     func testAPinnedMetricRunningOutStaysPinnedAndOnlyAUsedUpOneMovesToUsedUp() {
@@ -214,12 +214,11 @@ final class PriorityBoardTests: XCTestCase {
 
         let runningOut = pinnedBoard(sessionUsed: 95, monthlyUsed: 100)
         XCTAssertEqual(runningOut.pinned.map(\.id), ["claude@1.Session", "claude@1.Weekly"], "pinned beats running out")
-        XCTAssertEqual(runningOut.pinned.map { $0.item?.reason.severity }, [.critical, nil], "its ring keeps the warning")
+        XCTAssertEqual(runningOut.pinned.map { $0.item?.reason.severity }, [.critical, .normal], "its ring keeps the warning")
         XCTAssertTrue(runningOut.attention.isEmpty, "listed once")
         XCTAssertEqual(ids(runningOut.runningOut), ["claude@1.Session"], "still running out for the menu bar")
         XCTAssertEqual(ids(runningOut.usedUp), ["claude@1.Monthly"], "a used-up pin moves to Used Up")
         XCTAssertEqual(runningOut.usedUp.map(\.isPinned), [true], "its menu offers Unpin")
-        XCTAssertFalse(runningOut.showsClearRow, "a pin running out isn't all clear")
         XCTAssertEqual(runningOut.summary, .listed)
 
         let recovered = pinnedBoard(sessionUsed: 20, monthlyUsed: 0)
@@ -227,7 +226,6 @@ final class PriorityBoardTests: XCTestCase {
         XCTAssertTrue(recovered.usedUp.isEmpty)
         XCTAssertEqual(recovered.pinned.map(\.id), ["claude@1.Session", "claude@1.Weekly", "claude@1.Monthly"],
                        "back under Pinned in dashboard order")
-        XCTAssertTrue(recovered.showsClearRow)
     }
 
     func testABalanceWithAnythingLeftIsNotListed() throws {
@@ -307,7 +305,7 @@ final class PriorityBoardTests: XCTestCase {
         XCTAssertEqual(board().summary, .waitingForUsage)
         XCTAssertEqual(board(account(personal)).summary, .waitingForUsage)
         XCTAssertEqual(board(account(personal, unreported, balance)).summary, .noReportedLimits)
-        XCTAssertEqual(board(account(personal, unpaced("Quiet", used: 10))).summary, .allClear)
+        XCTAssertEqual(board(account(personal, unpaced("Quiet", used: 10))).summary, .listed)
         XCTAssertEqual(board(account(personal, unpaced("Spent", used: 100))).summary, .listed)
         XCTAssertEqual(board(account(personal, unpaced("Warning", used: 80))).summary, .listed)
     }
@@ -347,7 +345,6 @@ final class PriorityBoardTests: XCTestCase {
         XCTAssertEqual(live.summary, .listed)
         XCTAssertEqual(live.attention.map(\.id), [other.id])
         XCTAssertEqual(live.notices.map(\.message), [failure.message])
-        XCTAssertFalse(live.showsClearRow)
         let shared = store.priorityBoard(in: groups, now: now, hidingEmails: true)
         let notice = try XCTUnwrap(shared.notices.first)
         XCTAssertFalse(notice.provider.fullName.contains(email))
@@ -358,14 +355,12 @@ final class PriorityBoardTests: XCTestCase {
         let firstLaunch = board(account(personal), account(chatGPT))
         XCTAssertEqual(firstLaunch.waiting.map(\.id), [personal.id, chatGPT.id])
         XCTAssertEqual(firstLaunch.summary, .waitingForUsage)
-        XCTAssertFalse(firstLaunch.showsClearRow)
 
         let mixed = board(account(personal, unpaced("Warning", used: 80)), account(chatGPT))
         XCTAssertEqual(ids(mixed.attention), ["claude@1.Warning"])
         XCTAssertEqual(mixed.waiting.map(\.id), [chatGPT.id], "a pending account still shows while another is running out")
         let quiet = board(account(personal, unpaced("Quiet", used: 10)), account(chatGPT))
         XCTAssertEqual(quiet.waiting.map(\.id), [chatGPT.id])
-        XCTAssertFalse(quiet.showsClearRow, "All Clear can't speak for an account that hasn't reported")
 
         let reported = board(account(personal, unpaced("Warning", used: 80)), account(chatGPT, unpaced("Quiet", used: 10)))
         XCTAssertTrue(reported.waiting.isEmpty)
